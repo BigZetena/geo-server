@@ -1,11 +1,27 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(bodyParser.json());
 
+// Путь к файлу для хранения данных
+const DATA_FILE = path.join(__dirname, "data.json");
+
 // Объект для хранения данных
-const locationData = {};
+let locationData = {};
+
+// Загрузка данных из файла при старте сервера
+if (fs.existsSync(DATA_FILE)) {
+  const rawData = fs.readFileSync(DATA_FILE);
+  locationData = JSON.parse(rawData);
+}
+
+// Сохранение данных в файл
+function saveDataToFile() {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(locationData, null, 2));
+}
 
 // Добавление данных для локации
 app.post("/voltagedata/add", (req, res) => {
@@ -20,6 +36,7 @@ app.post("/voltagedata/add", (req, res) => {
   }
 
   locationData[location].push({ voltage1, voltage2 });
+  saveDataToFile(); // Сохранение данных в файл
   res.status(200).json({ message: "Data added successfully" });
 });
 
